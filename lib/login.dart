@@ -20,7 +20,10 @@ class _LoginPageState extends State<LoginPage> {
   String? errorMessage;
 
   Future<void> loginUser() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      print("Form validation failed");
+      return;
+    }
 
     setState(() {
       isLoading = true;
@@ -28,19 +31,53 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      await _auth.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+      final email = emailController.text.trim();
+      final password = passwordController.text.trim();
+
+      // Debugging: Log types
+      print("Attempting login for: $email");
+      print("Email type: ${email.runtimeType}");
+      print("Password type: ${password.runtimeType}");
+
+      final result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
       );
 
-      // Navigate to dashboard on successful login
+      print("Login successful: ${result.user?.uid}");
+
       if (!mounted) return;
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (_) => const DashboardPage()));
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
     } on FirebaseAuthException catch (e) {
+      print("FirebaseAuthException: ${e.code} - ${e.message}");
       setState(() {
         errorMessage = e.message;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message ?? "Login failed"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e, stackTrace) {
+      print("Unexpected error: $e");
+      print("Stack trace: $stackTrace");
+      print("Error type: ${e.runtimeType}");
+
+      setState(() {
+        errorMessage = "Unexpected error occurred. Check console for details.";
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Unexpected error: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       setState(() {
         isLoading = false;
@@ -92,9 +129,16 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 24),
                   if (errorMessage != null)
-                    Text(
-                      errorMessage!,
-                      style: const TextStyle(color: Colors.red),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                   ElevatedButton(
                     onPressed: isLoading ? null : loginUser,
@@ -102,7 +146,10 @@ class _LoginPageState extends State<LoginPage> {
                         ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                         : const Text('Login'),
                   ),
