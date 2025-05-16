@@ -56,7 +56,7 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message ?? "Login failed"),
-          backgroundColor: Colors.yellow,
+          backgroundColor: Colors.teal,
         ),
       );
     } catch (e) {
