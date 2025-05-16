@@ -102,7 +102,7 @@ class _SplashScreenState extends State<SplashScreen> {
               Text(
                 'Loading $_percent%',
                 style: const TextStyle(
-                  fontSize: 20,
+                  fontSize: 21,
                   color: Colors.white,
                   fontWeight: FontWeight.w500,
                 ),

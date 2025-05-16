@@ -31,7 +31,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final List<Map<String, String>> _parkedVehicles = [
     {'serial': '1', 'name': 'Zobaer', 'type': 'Motor Cycle', 'id': '101', 'status': 'parked'},
     {'serial': '2', 'name': 'Sojib', 'type': 'Car', 'id': '102', 'status': 'released'},
-    {'serial': '3', 'name': 'Rifat', 'type': 'Bike', 'id': '103', 'status': 'parked'},
+    {'serial': '3', 'name': 'MolLika', 'type': 'Bike', 'id': '103', 'status': 'parked'},
     {'serial': '4', 'name': 'Mitu', 'type': 'Car', 'id': '104', 'status': 'released'},
     {'serial': '5', 'name': 'Zobaer', 'type': 'Motor Cycle', 'id': '105', 'status': 'parked'},
     {'serial': '6', 'name': 'Sojib', 'type': 'Car', 'id': '106', 'status': 'parked'},

@@ -96,6 +96,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      Image.asset(
+                        'images/login1.png',
+                        width: 300,
+                        height: 300,
+                      ),
                       Center(
                         child: const Text(
                           'Forgot Password',
