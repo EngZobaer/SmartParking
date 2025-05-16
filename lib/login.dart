@@ -110,10 +110,10 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   Image.asset(
                     'images/login1.png',
-                    width: 200,
-                    height: 200,
+                    width: 300,
+                    height: 300,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 0),
                   const Text(
                     'Welcome to Smart Parking Ment System',
                     style: TextStyle(
@@ -199,7 +199,6 @@ class _LoginPageState extends State<LoginPage> {
                       'Forgot Password?',
                       style: TextStyle(
                         color: Colors.white,
-                        decoration: TextDecoration.underline,
                         fontSize: 14,
                       ),
                     ),
