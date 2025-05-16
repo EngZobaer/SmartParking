@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'dashboard.dart';
+import 'parking.dart';  // Import ParkingForm
+
 typedef NavBarCallback = void Function(int index);
 
 class CustomNavBar extends StatelessWidget {
@@ -18,7 +21,24 @@ class CustomNavBar extends StatelessWidget {
       currentIndex: currentIndex,
       selectedItemColor: Colors.teal,
       unselectedItemColor: Colors.grey,
-      onTap: onTap,
+      onTap: (index) {
+        if (index == 0) {
+          // Navigate to Dashboard when Home is tapped
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const DashboardPage()),
+          );
+        } else if (index == 2) {
+          // Navigate to Add Parking (ParkingForm) when View is tapped
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ParkingForm()), // Navigate to Add Parking form
+          );
+        } else {
+          // Otherwise, handle the other button taps
+          onTap(index);
+        }
+      },
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
@@ -28,10 +48,9 @@ class CustomNavBar extends StatelessWidget {
           icon: Icon(Icons.add_circle_outline),
           label: 'User',
         ),
-
         BottomNavigationBarItem(
-          icon: Icon(Icons.visibility),
-          label: 'View',
+          icon: Icon(Icons.add_circle_outline),
+          label: 'Parking',
         ),
       ],
     );

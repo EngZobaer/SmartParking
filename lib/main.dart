@@ -1,8 +1,10 @@
 import 'dart:async';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'login.dart';
+import 'dashboard.dart'; // Import the DashboardPage
+import 'drawer.dart'; // Import the CustomDrawer
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,10 +47,7 @@ class _SplashScreenState extends State<SplashScreen> {
           _percent++;
         } else {
           _timer?.cancel();
-          // Navigate immediately once 100% reached
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const LoginPage()),
-          );
+          _checkUserAuthentication();  // Check authentication once the progress bar is 100%
         }
       });
     });
@@ -58,6 +57,24 @@ class _SplashScreenState extends State<SplashScreen> {
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  // Check user authentication
+  Future<void> _checkUserAuthentication() async {
+    final FirebaseAuth _auth = FirebaseAuth.instance;
+
+    // If the user is logged in, navigate to the Dashboard, otherwise navigate to the Login page
+    if (_auth.currentUser != null) {
+      // If user is logged in, navigate to Dashboard
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+    } else {
+      // If no user is logged in, navigate to Login page
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+      );
+    }
   }
 
   @override

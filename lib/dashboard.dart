@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'navbar.dart';
 import 'new.dart';
 import 'login.dart'; // Import your login page here
+import 'drawer.dart'; // Import the CustomDrawer
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -29,14 +30,14 @@ class _DashboardPageState extends State<DashboardPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   final List<Map<String, String>> _parkedVehicles = [
-    {'serial': '1', 'name': 'Zobaer', 'type': 'Motor Cycle', 'id': '101', 'status': 'parked'},
-    {'serial': '2', 'name': 'Sojib', 'type': 'Car', 'id': '102', 'status': 'released'},
-    {'serial': '3', 'name': 'MolLika', 'type': 'Bike', 'id': '103', 'status': 'parked'},
-    {'serial': '4', 'name': 'Mitu', 'type': 'Car', 'id': '104', 'status': 'released'},
-    {'serial': '5', 'name': 'Zobaer', 'type': 'Motor Cycle', 'id': '105', 'status': 'parked'},
-    {'serial': '6', 'name': 'Sojib', 'type': 'Car', 'id': '106', 'status': 'parked'},
-    {'serial': '7', 'name': 'Rifat', 'type': 'Bike', 'id': '107', 'status': 'released'},
-    {'serial': '8', 'name': 'Mitu', 'type': 'Car', 'id': '108', 'status': 'parked'},
+    {'serial': '1', 'token': 'T101', 'name': 'Zobaer', 'type': 'Motor Cycle', 'id': '101', 'status': 'parked'},
+    {'serial': '2', 'token': 'T102', 'name': 'Sojib', 'type': 'Car', 'id': '102', 'status': 'released'},
+    {'serial': '3', 'token': 'T103', 'name': 'MolLika', 'type': 'Bike', 'id': '103', 'status': 'parked'},
+    {'serial': '4', 'token': 'T104', 'name': 'Mitu', 'type': 'Car', 'id': '104', 'status': 'released'},
+    {'serial': '5', 'token': 'T105', 'name': 'Zobaer', 'type': 'Motor Cycle', 'id': '105', 'status': 'parked'},
+    {'serial': '6', 'token': 'T106', 'name': 'Sojib', 'type': 'Car', 'id': '106', 'status': 'parked'},
+    {'serial': '7', 'token': 'T107', 'name': 'Rifat', 'type': 'Bike', 'id': '107', 'status': 'released'},
+    {'serial': '8', 'token': 'T108', 'name': 'Mitu', 'type': 'Car', 'id': '108', 'status': 'parked'},
   ];
 
   @override
@@ -118,7 +119,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _logout() async {
     await _auth.signOut();
-    // Navigate to login page and clear all previous routes
     Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
   }
 
@@ -133,23 +133,17 @@ class _DashboardPageState extends State<DashboardPage> {
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.teal,
-        automaticallyImplyLeading: false,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.logout),
-          //   tooltip: 'Logout',
-          //   onPressed: _logout,
-          // ),
           IconButton(
             icon: const Icon(Icons.exit_to_app),
             tooltip: 'Exit App',
             onPressed: () {
               SystemNavigator.pop();
             },
-          ),
-        ],
+          ),        ],
       ),
+      drawer: CustomDrawer(), // Use the CustomDrawer widget here
       body: Padding(
         padding: const EdgeInsets.fromLTRB(8, 16, 16, 16),
         child: Column(
@@ -211,12 +205,26 @@ class _DashboardPageState extends State<DashboardPage> {
                   Expanded(
                     flex: 3,
                     child: Text(
-                      'Name',
+                      'Token No',
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
                   Expanded(
                     flex: 3,
+                    child: Text(
+                      'ID',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'Name',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
                     child: Text(
                       'Vehicle Type',
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -274,15 +282,29 @@ class _DashboardPageState extends State<DashboardPage> {
                               Expanded(
                                 flex: 3,
                                 child: Text(
-                                  vehicle['name']!,
+                                  vehicle['token']!,  // Display Token Number
                                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                 ),
                               ),
                               Expanded(
                                 flex: 3,
                                 child: Text(
-                                  vehicle['type']!,
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  vehicle['id']!,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  vehicle['name']!,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  vehicle['type']!,  // Display Vehicle Type
+                                  style: const TextStyle(color: Colors.white),
                                 ),
                               ),
                               isExpanded
