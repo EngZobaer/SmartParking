@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'navbar.dart';
 import 'new.dart';
+import 'login.dart'; // Import your login page here
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -117,7 +118,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _logout() async {
     await _auth.signOut();
-    Navigator.of(context).pushReplacementNamed('/login');
+    // Navigate to login page and clear all previous routes
+    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
   }
 
   @override
@@ -134,11 +136,11 @@ class _DashboardPageState extends State<DashboardPage> {
         automaticallyImplyLeading: false,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: _logout,
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.logout),
+          //   tooltip: 'Logout',
+          //   onPressed: _logout,
+          // ),
           IconButton(
             icon: const Icon(Icons.exit_to_app),
             tooltip: 'Exit App',

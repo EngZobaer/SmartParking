@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dashboard.dart';
+import 'forgot_password.dart'; // Import the new page
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,8 +21,12 @@ class _LoginPageState extends State<LoginPage> {
   String? errorMessage;
 
   Future<void> loginUser() async {
-    if (!_formKey.currentState!.validate()) {
-      print("Form validation failed");
+    if (!_formKey.currentState!.validate()) return;
+
+    if (emailController.text.trim().isEmpty || passwordController.text.isEmpty) {
+      setState(() {
+        errorMessage = "Email and password cannot be empty";
+      });
       return;
     }
 
@@ -33,18 +38,10 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final email = emailController.text.trim();
       final password = passwordController.text.trim();
-
-      // Debugging: Log types
-      print("Attempting login for: $email");
-      print("Email type: ${email.runtimeType}");
-      print("Password type: ${password.runtimeType}");
-
       final result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-
-      print("Login successful: ${result.user?.uid}");
 
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -52,7 +49,6 @@ class _LoginPageState extends State<LoginPage> {
         MaterialPageRoute(builder: (_) => const DashboardPage()),
       );
     } on FirebaseAuthException catch (e) {
-      print("FirebaseAuthException: ${e.code} - ${e.message}");
       setState(() {
         errorMessage = e.message;
       });
@@ -60,24 +56,14 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message ?? "Login failed"),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.yellow,
         ),
       );
-    } catch (e, stackTrace) {
+    } catch (e) {
       print("Unexpected error: $e");
-      print("Stack trace: $stackTrace");
-      print("Error type: ${e.runtimeType}");
-
       setState(() {
-        errorMessage = "Unexpected error occurred. Check console for details.";
+        errorMessage = "Unexpected error occurred.";
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Unexpected error: ${e.toString()}"),
-          backgroundColor: Colors.red,
-        ),
-      );
     } finally {
       setState(() {
         isLoading = false;
@@ -92,10 +78,27 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  InputDecoration inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white),
+      prefixIcon: Icon(icon, color: Colors.white),
+      enabledBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.white),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.white, width: 2),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      floatingLabelBehavior: FloatingLabelBehavior.auto,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      backgroundColor: Colors.teal[600], // lighter teal background
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Center(
@@ -103,14 +106,28 @@ class _LoginPageState extends State<LoginPage> {
             child: Form(
               key: _formKey,
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Image.asset(
+                    'images/login1.png',
+                    width: 200,
+                    height: 200,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Welcome to Smart Parking Ment System',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 30),
                   TextFormField(
                     controller: emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email),
-                      border: OutlineInputBorder(),
-                    ),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: inputDecoration('Email', Icons.email),
                     keyboardType: TextInputType.emailAddress,
                     validator: (val) =>
                     val != null && val.contains('@') ? null : 'Enter valid email',
@@ -118,40 +135,74 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: passwordController,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: Icon(Icons.lock),
-                      border: OutlineInputBorder(),
-                    ),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: inputDecoration('Password', Icons.lock),
                     obscureText: true,
                     validator: (val) =>
                     val != null && val.length >= 6 ? null : 'Password min 6 chars',
                   ),
                   const SizedBox(height: 24),
+
+                  // Error message block commented out
+                  /*
                   if (errorMessage != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Text(
                         errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Colors.yellow,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
                       ),
                     ),
-                  ElevatedButton(
-                    onPressed: isLoading ? null : loginUser,
-                    child: isLoading
-                        ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
+                  */
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal[900], // deeper teal button
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                    )
-                        : const Text('Login'),
+                      onPressed: isLoading ? null : loginUser,
+                      child: isLoading
+                          ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                          : const Text(
+                        'Login',
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ForgotPasswordPage()),
+                      );
+                    },
+                    child: const Text(
+                      'Forgot Password?',
+                      style: TextStyle(
+                        color: Colors.white,
+                        decoration: TextDecoration.underline,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
                 ],
               ),
