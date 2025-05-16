@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "887265556259",
+    "project_id": "spms-1-b1dd7",
+    "storage_bucket": "spms-1-b1dd7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:887265556259:android:c094cdfdf596b5d0703e96",
+        "android_client_info": {
+          "package_name": "com.example.spms_v1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgJirYjKWSrTOZmXGUMy2eHNhc4_kPWP4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
