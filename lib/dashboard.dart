@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'navbar.dart';
 import 'new.dart';
@@ -24,6 +25,8 @@ class _DashboardPageState extends State<DashboardPage> {
   int _currentIndex = 0;
   String _searchQuery = '';
 
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   final List<Map<String, String>> _parkedVehicles = [
     {'serial': '1', 'name': 'Zobaer', 'type': 'Motor Cycle', 'id': '101', 'status': 'parked'},
     {'serial': '2', 'name': 'Sojib', 'type': 'Car', 'id': '102', 'status': 'released'},
@@ -41,6 +44,13 @@ class _DashboardPageState extends State<DashboardPage> {
     _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
       if (mounted) _updateDateTime();
     });
+
+    // Redirect to login if no user is logged in
+    if (_auth.currentUser == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      });
+    }
   }
 
   @override
@@ -84,7 +94,6 @@ class _DashboardPageState extends State<DashboardPage> {
       setState(() {
         _currentIndex = index;
         _expandedVehicleId = null;
-        debugPrint('Nav bar tapped: $index');
       });
     }
   }
@@ -97,7 +106,6 @@ class _DashboardPageState extends State<DashboardPage> {
       }
       _expandedVehicleId = null;
     });
-    debugPrint('Vehicle $id released');
   }
 
   void _cancelParking(String id) {
@@ -105,7 +113,11 @@ class _DashboardPageState extends State<DashboardPage> {
       _parkedVehicles.removeWhere((v) => v['id'] == id);
       _expandedVehicleId = null;
     });
-    debugPrint('Parking cancelled for vehicle $id');
+  }
+
+  Future<void> _logout() async {
+    await _auth.signOut();
+    Navigator.of(context).pushReplacementNamed('/login');
   }
 
   @override
@@ -122,6 +134,11 @@ class _DashboardPageState extends State<DashboardPage> {
         automaticallyImplyLeading: false,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: _logout,
+          ),
           IconButton(
             icon: const Icon(Icons.exit_to_app),
             tooltip: 'Exit App',
@@ -328,7 +345,6 @@ class _DashboardPageState extends State<DashboardPage> {
       onPressed: () {
         setState(() {
           _selectedFilter = filterName;
-          debugPrint('Selected filter: $filterName');
           _expandedVehicleId = null;
         });
       },

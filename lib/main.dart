@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
-import 'login.dart'; // Import your LoginPage
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+import 'login.dart';
+import 'dashboard.dart';
+import 'package:firebase_core/firebase_core.dart';
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(); // Initialize Firebase before running app
   runApp(const MyApp());
 }
 
@@ -11,67 +16,18 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Firebase Login Demo',
+      theme: ThemeData(primarySwatch: Colors.teal),
       debugShowCheckedModeBanner: false,
-      title: 'Smart Parking App',
-      theme: ThemeData(
-        primarySwatch: Colors.teal,
-      ),
-      home: const IntroPage(), // Set IntroPage as the initial screen
-    );
-  }
-}
 
-class IntroPage extends StatefulWidget {
-  const IntroPage({super.key});
+      // Set initial screen to LoginPage
+      initialRoute: '/login',
 
-  @override
-  State<IntroPage> createState() => _IntroPageState();
-}
-
-class _IntroPageState extends State<IntroPage> {
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.teal,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'Smart Parking',
-              style: TextStyle(
-                fontSize: 32.0,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 10.0),
-            const Text(
-              'Management System',
-              style: TextStyle(
-                fontSize: 24.0,
-                color: Colors.white70,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 40.0),
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          ],
-        ),
-      ),
+      // Define named routes for navigation
+      routes: {
+        '/login': (context) => const LoginPage(),
+        '/dashboard': (context) => const DashboardPage(),
+      },
     );
   }
 }
