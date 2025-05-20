@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'dashboard.dart';
-import 'parking.dart';  // Import ParkingForm
+import 'new.dart';
+import 'parking.dart';
+import 'student_info.dart';  // Import ParkingForm
 
 typedef NavBarCallback = void Function(int index);
 
@@ -22,35 +24,66 @@ class CustomNavBar extends StatelessWidget {
       selectedItemColor: Colors.teal,
       unselectedItemColor: Colors.grey,
       onTap: (index) {
-        if (index == 0) {
-          // Navigate to Dashboard when Home is tapped
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const DashboardPage()),
-          );
-        } else if (index == 2) {
-          // Navigate to Add Parking (ParkingForm) when View is tapped
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ParkingForm()), // Navigate to Add Parking form
-          );
-        } else {
-          // Otherwise, handle the other button taps
-          onTap(index);
+        switch (index) {
+          case 0:
+          // Navigate to Dashboard
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const DashboardPage()),
+            );
+            break;
+          case 1:
+          // Navigate to Add User screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const NewDataForm()),
+            );
+            break;
+          case 2:
+          // Navigate to Add Parking screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ParkingForm()),
+            );
+            break;
+          case 3:
+          // Navigate to View User screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const StudentInfo()),
+            );
+            break;
+          case 4:
+          // Navigate to View Parking screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const DashboardPage()),
+            );
+            break;
+          default:
+            onTap(index);
         }
       },
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
-          label: 'Home',
+          label: 'Home',  // Label under the icon
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.add_circle_outline),
-          label: 'User',
+          icon: Icon(Icons.person),
+          label: 'Add User',  // Label under the icon
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.add_circle_outline),
-          label: 'Parking',
+          icon: Icon(Icons.park),
+          label: 'Add Parking',  // Label under the icon
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.menu_book),
+          label: 'View User',  // Label under the icon
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.view_list),
+          label: 'View Parking',  // Label under the icon
         ),
       ],
     );

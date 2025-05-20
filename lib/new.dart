@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';  // Import Firestore
 import 'navbar.dart'; // Import the CustomNavBar
 
 class NewDataForm extends StatefulWidget {
@@ -40,7 +41,11 @@ class _NewDataFormState extends State<NewDataForm> {
 
   int _currentIndex = 1; // Default to "User" screen
 
-  void _onAddPressed() {
+  // Firebase instance
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Method to add data to Firestore
+  Future<void> _onAddPressed() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedDepartment == null || _selectedBloodGroup == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -49,24 +54,60 @@ class _NewDataFormState extends State<NewDataForm> {
         return;
       }
 
-      print('Name: ${_nameController.text}');
-      print('Student ID: ${_studentIdController.text}');
-      print('Mobile Number: ${_mobileNumberController.text}');
-      print('Present Address: ${_presentAddressController.text}');
-      print('Department: $_selectedDepartment');
-      print('Blood Group: $_selectedBloodGroup');
+      // Collect form data
+      String name = _nameController.text;
+      String studentId = _studentIdController.text;
+      String mobile = _mobileNumberController.text;
+      String address = _presentAddressController.text;
+      String department = _selectedDepartment!;
+      String bloodGroup = _selectedBloodGroup!;
 
-      _formKey.currentState!.reset();
-      setState(() {
-        _selectedDepartment = null;
-        _selectedBloodGroup = null;
-      });
+      try {
+        // Check if the studentId already exists in Firestore
+        QuerySnapshot snapshot = await FirebaseFirestore.instance
+            .collection('students_info')
+            .where('studentId', isEqualTo: studentId)
+            .get();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data added successfully!')),
-      );
+        if (snapshot.docs.isNotEmpty) {
+          // If the studentId already exists, show an error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Student ID already exists!')),
+          );
+          return; // Stop further submission
+        }
+
+        // Add the serial field along with other data
+        await FirebaseFirestore.instance.collection('students_info').add({
+          'studentId': studentId,
+          'name': name,
+          'mobile': mobile,  // Make sure this field is included
+          'department': department,
+          'bloodGroup': bloodGroup,  // Adding blood group too
+          'address': address,
+        });
+
+        // Reset the form after successful submission
+        _formKey.currentState!.reset();
+        setState(() {
+          _selectedDepartment = null;
+          _selectedBloodGroup = null;
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Data added successfully!')),
+        );
+      } catch (e) {
+        // Show error message if data submission fails
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to add data')),
+        );
+      }
     }
   }
+
+
 
   // Handle bottom nav bar tap
   void _onNavBarTapped(int index) {

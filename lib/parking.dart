@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'navbar.dart';  // Import the CustomNavBar
+import 'package:cloud_firestore/cloud_firestore.dart';  // Import Firestore
+import 'navbar.dart'; // Import the CustomNavBar
 
 class ParkingForm extends StatefulWidget {
   const ParkingForm({super.key});
@@ -17,52 +18,171 @@ class _ParkingFormState extends State<ParkingForm> {
 
   String? _selectedVehicleType;
 
-  // Sample student list
-  final List<Map<String, String>> _students = [
-    {'id': '101', 'name': 'Zobaer', 'mobile': '01712345678'},
-    {'id': '102', 'name': 'Sojib', 'mobile': '01787654321'},
-    {'id': '103', 'name': 'MolLika', 'mobile': '01812345678'},
-    {'id': '104', 'name': 'Mitu', 'mobile': '01698765432'},
-  ];
-
-  final List<String> _vehicleTypes = [
-    'Motorcycle',
-    'Car',
-    'Skuti',
-    'Bicycle',
-  ];
-
-  // Method to fetch student details based on student ID
-  void _fetchStudentDetails() {
+  // Method to fetch student details based on student ID from Firestore
+  void _fetchStudentDetails() async {
     final studentId = _studentIdController.text;
-    final student = _students.firstWhere(
-          (student) => student['id'] == studentId,
-      orElse: () => {'id': '', 'name': '', 'mobile': ''},
-    );
 
-    if (student['id'] != '') {
-      _nameController.text = student['name']!;
-      _mobileNumberController.text = student['mobile']!;
-    } else {
-      // If student ID doesn't match, clear the name and mobile number
-      _nameController.clear();
-      _mobileNumberController.clear();
+    if (studentId.isEmpty) {
+      return; // If the student ID is empty, don't query Firestore
+    }
+
+    try {
+      // Query Firestore to get the student details by studentId field
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('students_info')
+          .where('studentId', isEqualTo: studentId) // Query for studentId field
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // If the student exists, get the first document and populate the text fields
+        var studentSnapshot = querySnapshot.docs.first;
+
+        _nameController.text = studentSnapshot['name'] ?? 'No Name';
+        _mobileNumberController.text = studentSnapshot['mobile'] ?? 'No Mobile';
+      } else {
+        // If no student found, clear the fields
+        _nameController.clear();
+        _mobileNumberController.clear();
+      }
+    } catch (e) {
+      // If there's an error, show an error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching student data: $e')),
+      );
+    }
+  }
+  void _onSubmit() async {
+    if (_formKey.currentState!.validate()) {
+      // Collect form data
+      String studentId = _studentIdController.text;
+      String name = _nameController.text;
+      String mobile = _mobileNumberController.text;
+      String vehicleType = _selectedVehicleType!;
+
+      // Log data to the console for debugging
+      print("Student ID: $studentId");
+      print("Name: $name");
+      print("Mobile: $mobile");
+      print("Vehicle Type: $vehicleType");
+
+      // Generate the unique token
+      String token = await _generateUniqueToken();
+      print("Generated Token: $token");
+
+      try {
+        // Add the parking details to Firestore under 'parking_info' collection
+        await FirebaseFirestore.instance.collection('parking_info').add({
+          'studentId': studentId,
+          'name': name,
+          'mobile': mobile,
+          'vehicleType': vehicleType,
+          'token': token,  // Add the generated unique token
+          'timestamp': FieldValue.serverTimestamp(), // Automatically add timestamp
+        });
+
+        // Show the success dialog
+        _showSuccessDialog(studentId, name, token);
+
+        // Reset the form after successful submission
+        _formKey.currentState!.reset();
+        setState(() {
+          _selectedVehicleType = null;
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Parking details submitted successfully!')),
+        );
+      } catch (e) {
+        // Print the error for debugging
+        print('Error adding parking details: $e');
+
+        // Show error message if data submission fails
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to add parking details')),
+        );
+      }
     }
   }
 
-  void _onSubmit() {
-    if (_formKey.currentState!.validate()) {
-      // Handle form submission (e.g., save data to the database)
-      print('Student ID: ${_studentIdController.text}');
-      print('Name: ${_nameController.text}');
-      print('Mobile Number: ${_mobileNumberController.text}');
-      print('Selected Vehicle: $_selectedVehicleType');
+  // Method to generate a unique token number starting from 4001
+  Future<String> _generateUniqueToken() async {
+    // Fetch the last token from the Firestore collection
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('parking_info')
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .get();
 
-      // Show confirmation message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Parking details submitted successfully!')),
-      );
+    int token = 4001;  // Default starting token
+
+    if (snapshot.docs.isNotEmpty) {
+      var lastDoc = snapshot.docs.first;
+      token = int.tryParse(lastDoc['token']) ?? 4001;  // Get the last token or default to 4001
+      token++;  // Increment the token number
     }
+
+    return token.toString();  // Return the token as a string
+  }
+
+  // Method to show a success dialog with parking details
+  void _showSuccessDialog(String studentId, String name, String token) {
+    final currentTime = DateTime.now();
+
+    // Manually get the day of the week
+    String dayOfWeek;
+    switch (currentTime.weekday) {
+      case 1:
+        dayOfWeek = 'Monday';
+        break;
+      case 2:
+        dayOfWeek = 'Tuesday';
+        break;
+      case 3:
+        dayOfWeek = 'Wednesday';
+        break;
+      case 4:
+        dayOfWeek = 'Thursday';
+        break;
+      case 5:
+        dayOfWeek = 'Friday';
+        break;
+      case 6:
+        dayOfWeek = 'Saturday';
+        break;
+      case 7:
+        dayOfWeek = 'Sunday';
+        break;
+      default:
+        dayOfWeek = 'Unknown';
+    }
+
+    // Format time to be in hours and minutes (e.g., 2:30 PM)
+    String formattedTime = "$dayOfWeek, ${currentTime.hour}:${currentTime.minute.toString().padLeft(2, '0')} PM";
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Parking Submitted'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("ID: $studentId"),
+            Text("Name: $name"),
+            Text("Unique Token: $token"),
+            Text("Submission Time: $formattedTime"),  // Display the formatted date and time
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();  // Close the dialog
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -131,7 +251,7 @@ class _ParkingFormState extends State<ParkingForm> {
                   labelText: 'Select Vehicle',
                   border: OutlineInputBorder(),
                 ),
-                items: _vehicleTypes
+                items: ['Motorcycle', 'Car', 'Skuti', 'Bicycle']
                     .map((vehicle) => DropdownMenuItem(value: vehicle, child: Text(vehicle)))
                     .toList(),
                 onChanged: (value) {

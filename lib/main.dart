@@ -5,11 +5,12 @@ import 'login.dart';
 import 'dashboard.dart'; // Import the DashboardPage
 import 'drawer.dart'; // Import the CustomDrawer
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(const MyApp());
+  await Firebase.initializeApp();  // Initialize Firebase
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
