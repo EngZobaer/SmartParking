@@ -21,11 +21,10 @@ class _NewDataFormState extends State<NewDataForm> {
   String? _selectedBloodGroup;
 
   final List<String> _departments = [
-    'Computer Science',
-    'Electrical Engineering',
-    'Mechanical Engineering',
-    'Civil Engineering',
-    'Business Administration',
+    'CSE',
+    'EEE',
+    'Civil',
+
   ];
 
   final List<String> _bloodGroups = [

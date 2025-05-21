@@ -253,9 +253,23 @@ class _ParkingFormState extends State<ParkingForm> {
                   labelText: 'Select Vehicle',
                   border: OutlineInputBorder(),
                 ),
-                items: ['Motorcycle', 'Car', 'Skuti', 'Bicycle']
-                    .map((vehicle) => DropdownMenuItem(value: vehicle, child: Text(vehicle)))
-                    .toList(),
+                items: [
+                  {'vehicle': 'Motorcycle', 'icon': Icons.motorcycle},
+                  {'vehicle': 'Taxi/Ride', 'icon': Icons.local_taxi},
+                  {'vehicle': 'Scooter', 'icon': Icons.skateboarding_outlined},
+                  {'vehicle': 'Bicycle', 'icon': Icons.pedal_bike},
+                ].map((Map<String, dynamic> vehicle) {
+                  return DropdownMenuItem<String>(
+                    value: vehicle['vehicle'],
+                    child: Row(
+                      children: [
+                        Icon(vehicle['icon'], size: 20),  // Icon for vehicle
+                        SizedBox(width: 10),              // Space between icon and text
+                        Text(vehicle['vehicle']),        // Vehicle name
+                      ],
+                    ),
+                  );
+                }).toList(),
                 onChanged: (value) {
                   setState(() {
                     _selectedVehicleType = value;
@@ -268,7 +282,8 @@ class _ParkingFormState extends State<ParkingForm> {
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
+
+                SizedBox(height: 24),
 
               // Submit button
               SizedBox(
