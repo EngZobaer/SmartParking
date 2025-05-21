@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'dashboard.dart';
 import 'new.dart';
 import 'parking.dart';
@@ -23,6 +22,7 @@ class CustomNavBar extends StatelessWidget {
       currentIndex: currentIndex,
       selectedItemColor: Colors.teal,
       unselectedItemColor: Colors.grey,
+      backgroundColor: Colors.teal[100],  // Set background color to teal[100]
       onTap: (index) {
         switch (index) {
           case 0:
@@ -64,7 +64,7 @@ class CustomNavBar extends StatelessWidget {
             onTap(index);
         }
       },
-      items: const [
+      items:  [
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
           label: 'Home',  // Label under the icon

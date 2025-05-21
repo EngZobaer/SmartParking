@@ -3,10 +3,10 @@ import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // For Firestore
 
 import 'navbar.dart';
 import 'new.dart';
-import 'login.dart'; // Import your login page here
 import 'drawer.dart'; // Import the CustomDrawer
 
 class DashboardPage extends StatefulWidget {
@@ -19,7 +19,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   String _currentTime = '';
   String _currentDate = '';
-  String _selectedFilter = 'Today Parked';
+  String _selectedFilter = 'Today Parked'; // Default filter
   late Timer _timer;
 
   String? _expandedVehicleId;
@@ -29,16 +29,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  final List<Map<String, String>> _parkedVehicles = [
-    {'serial': '1', 'token': 'T101', 'name': 'Zobaer', 'type': 'Motor Cycle', 'id': '101', 'status': 'parked'},
-    {'serial': '2', 'token': 'T102', 'name': 'Sojib', 'type': 'Car', 'id': '102', 'status': 'released'},
-    {'serial': '3', 'token': 'T103', 'name': 'MolLika', 'type': 'Bike', 'id': '103', 'status': 'parked'},
-    {'serial': '4', 'token': 'T104', 'name': 'Mitu', 'type': 'Car', 'id': '104', 'status': 'released'},
-    {'serial': '5', 'token': 'T105', 'name': 'Zobaer', 'type': 'Motor Cycle', 'id': '105', 'status': 'parked'},
-    {'serial': '6', 'token': 'T106', 'name': 'Sojib', 'type': 'Car', 'id': '106', 'status': 'parked'},
-    {'serial': '7', 'token': 'T107', 'name': 'Rifat', 'type': 'Bike', 'id': '107', 'status': 'released'},
-    {'serial': '8', 'token': 'T108', 'name': 'Mitu', 'type': 'Car', 'id': '108', 'status': 'parked'},
-  ];
+  late Stream<QuerySnapshot> _parkedVehiclesStream;
 
   @override
   void initState() {
@@ -47,7 +38,12 @@ class _DashboardPageState extends State<DashboardPage> {
       if (mounted) _updateDateTime();
     });
 
-    // Redirect to login if no user is logged in
+    _parkedVehiclesStream =
+        FirebaseFirestore.instance
+            .collection('parking_info')
+            .orderBy('timestamp', descending: true)
+            .snapshots();
+
     if (_auth.currentUser == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pushReplacementNamed('/login');
@@ -68,19 +64,74 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  List<Map<String, String>> _filterParkedVehicles() {
-    List<Map<String, String>> filtered = _parkedVehicles;
+  List<Map<String, dynamic>> _filterParkedVehicles(QuerySnapshot snapshot) {
+    List<Map<String, dynamic>> filtered = [];
 
+    filtered =
+        snapshot.docs.map((doc) {
+          var data = doc.data() as Map<String, dynamic>;
+
+          String token = data['token'] ?? 'N/A';
+          String name = data['name'] ?? 'No Name';
+          String id = data['studentId'] ?? 'N/A';
+          String status =
+              (data['parked']?.isEmpty ?? true)
+                  ? 'N/A'
+                  : data['status'] ?? 'N/A';
+          String vehicleType = data['vehicleType'] ?? 'N/A';
+          String serial =
+              (data['serial'] ?? '').toString().isEmpty
+                  ? 'N/A'
+                  : data['serial'].toString();
+
+          DateTime timestamp =
+              (data['timestamp'] as Timestamp)
+                  .toDate(); // Convert Timestamp to DateTime
+
+          return {
+            'token': token,
+            'name': name,
+            'id': id,
+            'status': status,
+            'vehicleType': vehicleType,
+            'serial': serial,
+            'timestamp': timestamp,
+            'date': DateFormat(
+              'yyyy-MM-dd',
+            ).format(timestamp), // Format date for display
+          };
+        }).toList();
+
+    // Apply search query filter (if any)
     if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((vehicle) {
-        return vehicle['id']!.toLowerCase().contains(_searchQuery.toLowerCase());
-      }).toList();
+      filtered =
+          filtered.where((vehicle) {
+            return vehicle['id']!.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            );
+          }).toList();
     }
 
+    // Apply the filter for Today Parked status
     if (_selectedFilter == 'Today Parked') {
-      filtered = filtered.where((v) => v['status'] == 'parked').toList();
+      final today = DateTime.now();
+
+      filtered =
+          filtered.where((vehicle) {
+            // Convert timestamp to the local timezone
+            DateTime vehicleDate = vehicle['timestamp']!;
+            DateTime localDate = DateTime(
+              vehicleDate.year,
+              vehicleDate.month,
+              vehicleDate.day,
+            ); // Normalize to date only
+
+            return vehicle['status'] == 'parked' &&
+                localDate.isAtSameMomentAs(today); // Compare with today's date
+          }).toList();
     } else if (_selectedFilter == 'Release Parked') {
-      filtered = filtered.where((v) => v['status'] == 'released').toList();
+      filtered =
+          filtered.where((vehicle) => vehicle['status'] == 'released').toList();
     }
 
     return filtered;
@@ -100,32 +151,18 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  void _releaseVehicle(String id) {
-    setState(() {
-      int idx = _parkedVehicles.indexWhere((v) => v['id'] == id);
-      if (idx != -1) {
-        _parkedVehicles[idx]['status'] = 'released';
-      }
-      _expandedVehicleId = null;
-    });
+  void _releaseVehicle(String id) async {
+    // Implement release vehicle functionality
+    print("Releasing vehicle with ID: $id");
   }
 
-  void _cancelParking(String id) {
-    setState(() {
-      _parkedVehicles.removeWhere((v) => v['id'] == id);
-      _expandedVehicleId = null;
-    });
-  }
-
-  Future<void> _logout() async {
-    await _auth.signOut();
-    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+  void _cancelParking(String id) async {
+    // Implement cancel parking functionality
+    print("Cancelling parking for vehicle with ID: $id");
   }
 
   @override
   Widget build(BuildContext context) {
-    final filteredVehicles = _filterParkedVehicles();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -133,7 +170,6 @@ class _DashboardPageState extends State<DashboardPage> {
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.teal,
-        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.exit_to_app),
@@ -141,11 +177,16 @@ class _DashboardPageState extends State<DashboardPage> {
             onPressed: () {
               SystemNavigator.pop();
             },
-          ),        ],
+            color: Colors.white, // Set logout icon color to black
+          ),
+        ],
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ), // Set all icons in AppBar to black
       ),
-      drawer: CustomDrawer(), // Use the CustomDrawer widget here
+      drawer: CustomDrawer(),
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 16, 16, 16),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -154,7 +195,10 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 Text(
                   _currentTime,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   _currentDate,
@@ -167,8 +211,13 @@ class _DashboardPageState extends State<DashboardPage> {
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.search),
                 hintText: 'Search by Vehicle ID...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               onChanged: (value) {
                 setState(() {
@@ -186,171 +235,171 @@ class _DashboardPageState extends State<DashboardPage> {
               ],
             ),
             const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.teal.shade700,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: const [
-                  SizedBox(
-                    width: 40,
-                    child: Text(
-                      'Sl',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      'Token No',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      'ID',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      'Name',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      'Vehicle Type',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 60,
-                    child: Text(
-                      'Action',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
             Expanded(
-              child: filteredVehicles.isEmpty
-                  ? Center(
-                child: Text(
-                  'No vehicles found',
-                  style: TextStyle(color: Colors.grey.shade700, fontSize: 18),
-                ),
-              )
-                  : Scrollbar(
-                thumbVisibility: true,
-                thickness: 6,
-                radius: const Radius.circular(5),
-                child: ListView.separated(
-                  itemCount: filteredVehicles.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final vehicle = filteredVehicles[index];
-                    final isExpanded = _expandedVehicleId == vehicle['id'];
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _parkedVehiclesStream,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                    return Material(
-                      color: Colors.teal,
-                      borderRadius: BorderRadius.circular(12),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () {},
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 40,
-                                child: Text(
-                                  vehicle['serial']!,
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                ),
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(child: Text('No vehicles found'));
+                  }
+
+                  final filteredVehicles = _filterParkedVehicles(
+                    snapshot.data!,
+                  );
+
+                  return Scrollbar(
+                    thumbVisibility: true,
+                    thickness: 6,
+                    radius: const Radius.circular(5),
+                    child: ListView.separated(
+                      itemCount: filteredVehicles.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final vehicle = filteredVehicles[index];
+                        final isExpanded = _expandedVehicleId == vehicle['id'];
+
+                        return Material(
+                          color: Colors.teal,
+                          borderRadius: BorderRadius.circular(12),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {},
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 16,
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                flex: 3,
-                                child: Text(
-                                  vehicle['token']!,  // Display Token Number
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: Text(
-                                  vehicle['id']!,
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: Text(
-                                  vehicle['name']!,
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  vehicle['type']!,  // Display Vehicle Type
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ),
-                              isExpanded
-                                  ? Row(
+                              child: Row(
                                 children: [
-                                  ElevatedButton(
-                                    onPressed: () => _releaseVehicle(vehicle['id']!),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green,
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    child: const Text('Release'),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        vehicle['date']!, // Show formatted date here
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                      ),
+
+                                      Text(
+                                        vehicle['token']!,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton(
-                                    onPressed: () => _cancelParking(vehicle['id']!),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    child: const Text('Cancel'),
+                                  SizedBox(width: 10),
+
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        vehicle['serial'] ??
+                                            '', // Display empty if no serial
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+
+                                      Text(
+                                        vehicle['id']!,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
                                   ),
+
+                                  const SizedBox(width: 10),
+
+                                  Expanded(
+                                    flex: 3,
+                                    child: Text(
+                                      vehicle['name']!,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      vehicle['vehicleType']!,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+
+                                  isExpanded
+                                      ? Row(
+                                        children: [
+                                          ElevatedButton(
+                                            onPressed:
+                                                () => _releaseVehicle(
+                                                  vehicle['id']!,
+                                                ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.green,
+                                              foregroundColor: Colors.white,
+                                            ),
+                                            child: const Text('Release'),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          ElevatedButton(
+                                            onPressed:
+                                                () => _cancelParking(
+                                                  vehicle['id']!,
+                                                ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.red,
+                                              foregroundColor: Colors.white,
+                                            ),
+                                            child: const Text('Cancel'),
+                                          ),
+                                        ],
+                                      )
+                                      : IconButton(
+                                        icon: const Icon(
+                                          Icons.add_circle_outline,
+                                        ),
+                                        color: Colors.white,
+                                        iconSize: 28,
+                                        tooltip: 'Actions',
+                                        onPressed: () {
+                                          setState(() {
+                                            if (_expandedVehicleId ==
+                                                vehicle['id']) {
+                                              _expandedVehicleId = null;
+                                            } else {
+                                              _expandedVehicleId =
+                                                  vehicle['id'];
+                                            }
+                                          });
+                                        },
+                                      ),
                                 ],
-                              )
-                                  : IconButton(
-                                icon: const Icon(Icons.add_circle_outline),
-                                color: Colors.white,
-                                iconSize: 28,
-                                tooltip: 'Actions',
-                                onPressed: () {
-                                  setState(() {
-                                    if (_expandedVehicleId == vehicle['id']) {
-                                      _expandedVehicleId = null;
-                                    } else {
-                                      _expandedVehicleId = vehicle['id'];
-                                    }
-                                  });
-                                },
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -376,9 +425,7 @@ class _DashboardPageState extends State<DashboardPage> {
         backgroundColor: isSelected ? Colors.teal : Colors.grey[300],
         foregroundColor: isSelected ? Colors.white : Colors.black,
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       child: Text(filterName),
     );
