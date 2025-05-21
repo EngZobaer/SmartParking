@@ -19,7 +19,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   String _currentTime = '';
   String _currentDate = '';
-  String _selectedFilter = 'Today Parked'; // Default filter
+  String _selectedFilter = 'All Vehicles'; // Default filter
   late Timer _timer;
 
   String? _expandedVehicleId;
@@ -75,18 +75,18 @@ class _DashboardPageState extends State<DashboardPage> {
           String name = data['name'] ?? 'No Name';
           String id = data['studentId'] ?? 'N/A';
           String parked =
-              (data['parked']?.isEmpty ?? true)
-                  ? 'N/A'
-                  : data['status'] ?? 'N/A';
+          (data['parked']?.isEmpty ?? true)
+              ? 'N/A'
+              : data['status'] ?? 'N/A';
           String vehicleType = data['vehicleType'] ?? 'N/A';
           String serial =
-              (data['serial'] ?? '').toString().isEmpty
-                  ? 'N/A'
-                  : data['serial'].toString();
+          (data['serial'] ?? '').toString().isEmpty
+              ? 'N/A'
+              : data['serial'].toString();
 
           DateTime timestamp =
-              (data['timestamp'] as Timestamp)
-                  .toDate(); // Convert Timestamp to DateTime
+          (data['timestamp'] as Timestamp)
+              .toDate(); // Convert Timestamp to DateTime
 
           return {
             'token': token,
@@ -112,21 +112,8 @@ class _DashboardPageState extends State<DashboardPage> {
           }).toList();
     }
 
-    // Apply the filter for Today Parked status
-    if (_selectedFilter == 'Today Parked') {
-      final today = DateTime.now();
-      filtered = filtered.where((vehicle) {
-        DateTime vehicleTimestamp = vehicle['timestamp'];
-        DateTime vehicleDate = DateTime(vehicleTimestamp.year, vehicleTimestamp.month, vehicleTimestamp.day);
-
-        print('Vehicle Date: $vehicleDate, Today: $today');
-
-        return vehicle['status'] == 'parked' && vehicleDate.isAtSameMomentAs(today);
-      }).toList();
-    }
-
-
-    else if (_selectedFilter == 'Release Parked') {
+    // Apply the filter for Release Parked status
+    if (_selectedFilter == 'Release Parked') {
       filtered =
           filtered.where((vehicle) => vehicle['status'] == 'released').toList();
     }
@@ -146,6 +133,48 @@ class _DashboardPageState extends State<DashboardPage> {
         _expandedVehicleId = null;
       });
     }
+  }
+
+  // Function to show the popup with action buttons (Release and Cancel)
+  void _showActionPopup(String vehicleId) {
+    _expandedVehicleId = vehicleId; // Store the vehicle ID
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Select Action'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  _releaseVehicle(vehicleId); // Call the release vehicle function
+                  Navigator.pop(context); // Close the popup
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Release'),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  _cancelParking(vehicleId); // Call the cancel parking function
+                  Navigator.pop(context); // Close the popup
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Cancel'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _releaseVehicle(String id) async {
@@ -224,11 +253,14 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const SizedBox(height: 20),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildFilterButton('Today Parked'),
-                _buildFilterButton('Release Parked'),
-                _buildFilterButton('All Vehicles'),
+                Expanded(
+                  child: _buildFilterButton('All Vehicles'),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildFilterButton('Release Parked'),
+                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -278,15 +310,14 @@ class _DashboardPageState extends State<DashboardPage> {
                                 children: [
                                   Column(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        vehicle['date']!, // Show formatted date here
+                                        vehicle['date']!,
                                         style: const TextStyle(
                                           color: Colors.white,
                                         ),
                                       ),
-
                                       Text(
                                         vehicle['token']!,
                                         style: const TextStyle(
@@ -297,20 +328,17 @@ class _DashboardPageState extends State<DashboardPage> {
                                     ],
                                   ),
                                   SizedBox(width: 10),
-
                                   Column(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        vehicle['parked'] ??
-                                            '', // Display empty if no serial
+                                        vehicle['parked'] ?? '',
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-
                                       Text(
                                         vehicle['id']!,
                                         style: const TextStyle(
@@ -319,9 +347,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                       ),
                                     ],
                                   ),
-
                                   const SizedBox(width: 10),
-
                                   Expanded(
                                     flex: 3,
                                     child: Text(
@@ -340,54 +366,17 @@ class _DashboardPageState extends State<DashboardPage> {
                                       ),
                                     ),
                                   ),
-
-                                  isExpanded
-                                      ? Row(
-                                        children: [
-                                          ElevatedButton(
-                                            onPressed:
-                                                () => _releaseVehicle(
-                                                  vehicle['id']!,
-                                                ),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.green,
-                                              foregroundColor: Colors.white,
-                                            ),
-                                            child: const Text('Release'),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          ElevatedButton(
-                                            onPressed:
-                                                () => _cancelParking(
-                                                  vehicle['id']!,
-                                                ),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.red,
-                                              foregroundColor: Colors.white,
-                                            ),
-                                            child: const Text('Cancel'),
-                                          ),
-                                        ],
-                                      )
-                                      : IconButton(
-                                        icon: const Icon(
-                                          Icons.add_circle_outline,
-                                        ),
-                                        color: Colors.white,
-                                        iconSize: 28,
-                                        tooltip: 'Actions',
-                                        onPressed: () {
-                                          setState(() {
-                                            if (_expandedVehicleId ==
-                                                vehicle['id']) {
-                                              _expandedVehicleId = null;
-                                            } else {
-                                              _expandedVehicleId =
-                                                  vehicle['id'];
-                                            }
-                                          });
-                                        },
-                                      ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.add_circle_outline,
+                                    ),
+                                    color: Colors.white,
+                                    iconSize: 28,
+                                    tooltip: 'Actions',
+                                    onPressed: () {
+                                      _showActionPopup(vehicle['id']!); // Show the popup
+                                    },
+                                  ),
                                 ],
                               ),
                             ),
