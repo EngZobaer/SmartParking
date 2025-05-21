@@ -74,7 +74,7 @@ class _DashboardPageState extends State<DashboardPage> {
           String token = data['token'] ?? 'N/A';
           String name = data['name'] ?? 'No Name';
           String id = data['studentId'] ?? 'N/A';
-          String status =
+          String parked =
               (data['parked']?.isEmpty ?? true)
                   ? 'N/A'
                   : data['status'] ?? 'N/A';
@@ -92,7 +92,7 @@ class _DashboardPageState extends State<DashboardPage> {
             'token': token,
             'name': name,
             'id': id,
-            'status': status,
+            'parked': parked,
             'vehicleType': vehicleType,
             'serial': serial,
             'timestamp': timestamp,
@@ -115,21 +115,18 @@ class _DashboardPageState extends State<DashboardPage> {
     // Apply the filter for Today Parked status
     if (_selectedFilter == 'Today Parked') {
       final today = DateTime.now();
+      filtered = filtered.where((vehicle) {
+        DateTime vehicleTimestamp = vehicle['timestamp'];
+        DateTime vehicleDate = DateTime(vehicleTimestamp.year, vehicleTimestamp.month, vehicleTimestamp.day);
 
-      filtered =
-          filtered.where((vehicle) {
-            // Convert timestamp to the local timezone
-            DateTime vehicleDate = vehicle['timestamp']!;
-            DateTime localDate = DateTime(
-              vehicleDate.year,
-              vehicleDate.month,
-              vehicleDate.day,
-            ); // Normalize to date only
+        print('Vehicle Date: $vehicleDate, Today: $today');
 
-            return vehicle['status'] == 'parked' &&
-                localDate.isAtSameMomentAs(today); // Compare with today's date
-          }).toList();
-    } else if (_selectedFilter == 'Release Parked') {
+        return vehicle['status'] == 'parked' && vehicleDate.isAtSameMomentAs(today);
+      }).toList();
+    }
+
+
+    else if (_selectedFilter == 'Release Parked') {
       filtered =
           filtered.where((vehicle) => vehicle['status'] == 'released').toList();
     }
@@ -306,7 +303,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        vehicle['serial'] ??
+                                        vehicle['parked'] ??
                                             '', // Display empty if no serial
                                         style: const TextStyle(
                                           color: Colors.white,
