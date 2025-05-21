@@ -50,7 +50,9 @@ class _ParkingFormState extends State<ParkingForm> {
         SnackBar(content: Text('Error fetching student data: $e')),
       );
     }
-  }void _onSubmit() async {
+  }
+
+  void _onSubmit() async {
     if (_formKey.currentState!.validate()) {
       // Collect form data
       String studentId = _studentIdController.text;
@@ -104,7 +106,6 @@ class _ParkingFormState extends State<ParkingForm> {
       }
     }
   }
-
 
   // Method to generate a unique token number starting from 4001
   Future<String> _generateUniqueToken() async {

@@ -94,10 +94,8 @@ class _NewDataFormState extends State<NewDataForm> {
           _selectedBloodGroup = null;
         });
 
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Data added successfully!')),
-        );
+        // Show the custom dialog for success
+        _showSuccessDialog();
       } catch (e) {
         // Show error message if data submission fails
         ScaffoldMessenger.of(context).showSnackBar(
@@ -107,7 +105,41 @@ class _NewDataFormState extends State<NewDataForm> {
     }
   }
 
-
+  // Function to show a success dialog in the center of the screen
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Make dialog not dismissable by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.teal, // Teal background
+          title: const Text(
+            'Success',
+            style: TextStyle(
+              color: Colors.white, // White text for title
+            ),
+          ),
+          content: const Text(
+            'Data added successfully!',
+            style: TextStyle(
+              color: Colors.white, // White text for message
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
+              child: const Text(
+                'OK',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   // Handle bottom nav bar tap
   void _onNavBarTapped(int index) {
@@ -163,6 +195,7 @@ class _NewDataFormState extends State<NewDataForm> {
               labelText: 'User Name',
               border: OutlineInputBorder(),
             ),
+            textCapitalization: TextCapitalization.words, // Automatically capitalize each word
             validator: (value) =>
             value == null || value.isEmpty ? 'Please enter user name' : null,
           ),

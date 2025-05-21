@@ -329,8 +329,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   ),
                                   SizedBox(width: 10),
                                   Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         vehicle['parked'] ?? '',
