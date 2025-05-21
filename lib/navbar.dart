@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'dashboard.dart';
 import 'new.dart';
 import 'parking.dart';
-import 'student_info.dart';  // Import ParkingForm
+import 'student_info.dart';
 
 typedef NavBarCallback = void Function(int index);
+
+const Color customTealColor = Color(0xFF009688); // Custom teal color
 
 class CustomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -20,41 +22,36 @@ class CustomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       currentIndex: currentIndex,
-      selectedItemColor: Colors.teal,
-      unselectedItemColor: Colors.grey,
-      backgroundColor: Colors.teal[100],  // Set background color to teal[100]
+      selectedItemColor: customTealColor,  // Use custom teal color for selected item
+      unselectedItemColor: Colors.grey,   // Default color for unselected items
+      backgroundColor: customTealColor,   // Background color for the navbar
       onTap: (index) {
         switch (index) {
           case 0:
-          // Navigate to Dashboard
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const DashboardPage()),
             );
             break;
           case 1:
-          // Navigate to Add User screen
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const NewDataForm()),
             );
             break;
           case 2:
-          // Navigate to Add Parking screen
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ParkingForm()),
             );
             break;
           case 3:
-          // Navigate to View User screen
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const StudentInfo()),
             );
             break;
           case 4:
-          // Navigate to View Parking screen
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const DashboardPage()),
@@ -64,26 +61,26 @@ class CustomNavBar extends StatelessWidget {
             onTap(index);
         }
       },
-      items:  [
+      items: [
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
-          label: 'Home',  // Label under the icon
+          label: 'Home',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person),
-          label: 'Add User',  // Label under the icon
+          label: 'Add User',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.park),
-          label: 'Add Parking',  // Label under the icon
+          label: 'Add Parking',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.menu_book),
-          label: 'View User',  // Label under the icon
+          label: 'View User',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.view_list),
-          label: 'View Parking',  // Label under the icon
+          label: 'View Parking',
         ),
       ],
     );

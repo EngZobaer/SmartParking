@@ -51,7 +51,6 @@ class _ParkingFormState extends State<ParkingForm> {
       );
     }
   }
-
   void _onSubmit() async {
     if (_formKey.currentState!.validate()) {
       // Collect form data
@@ -80,6 +79,7 @@ class _ParkingFormState extends State<ParkingForm> {
           'token': token,  // Add the generated unique token
           'timestamp': FieldValue.serverTimestamp(), // Automatically add timestamp
           'parked': 'parked', // Add the 'parked' field (set to 'parked' initially)
+          'status': 'parked', // Set status to 'parked'
         });
 
         // Show the success dialog
@@ -170,7 +170,7 @@ class _ParkingFormState extends State<ParkingForm> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text("ID: $studentId"),
-            Text("Name: $name"),
+            Text("Name: $name",style: TextStyle(color: Colors.black),),
             Text("Unique Token: $token"),
             Text("Submission Time: $formattedTime"),  // Display the formatted date and time
           ],

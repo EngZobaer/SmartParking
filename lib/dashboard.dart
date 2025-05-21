@@ -63,63 +63,49 @@ class _DashboardPageState extends State<DashboardPage> {
       _currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     });
   }
-
   List<Map<String, dynamic>> _filterParkedVehicles(QuerySnapshot snapshot) {
     List<Map<String, dynamic>> filtered = [];
 
-    filtered =
-        snapshot.docs.map((doc) {
-          var data = doc.data() as Map<String, dynamic>;
+    filtered = snapshot.docs.map((doc) {
+      var data = doc.data() as Map<String, dynamic>;
 
-          String token = data['token'] ?? 'N/A';
-          String name = data['name'] ?? 'No Name';
-          String id = data['studentId'] ?? 'N/A';
-          String parked =
-          (data['parked']?.isEmpty ?? true)
-              ? 'N/A'
-              : data['status'] ?? 'N/A';
-          String vehicleType = data['vehicleType'] ?? 'N/A';
-          String serial =
-          (data['serial'] ?? '').toString().isEmpty
-              ? 'N/A'
-              : data['serial'].toString();
+      String token = data['token'] ?? 'N/A';
+      String name = data['name'] ?? 'No Name';
+      String id = data['studentId'] ?? 'N/A';
+      String parked = (data['parked']?.isEmpty ?? true) ? 'N/A' : data['status'] ?? 'N/A';
+      String vehicleType = data['vehicleType'] ?? 'N/A';
+      String serial = (data['serial'] ?? '').toString().isEmpty ? 'N/A' : data['serial'].toString();
 
-          DateTime timestamp =
-          (data['timestamp'] as Timestamp)
-              .toDate(); // Convert Timestamp to DateTime
+      DateTime timestamp = (data['timestamp'] as Timestamp).toDate(); // Convert Timestamp to DateTime
 
-          return {
-            'token': token,
-            'name': name,
-            'id': id,
-            'parked': parked,
-            'vehicleType': vehicleType,
-            'serial': serial,
-            'timestamp': timestamp,
-            'date': DateFormat(
-              'yyyy-MM-dd',
-            ).format(timestamp), // Format date for display
-          };
-        }).toList();
+      return {
+        'token': token,
+        'name': name,
+        'id': id,
+        'parked': parked,
+        'vehicleType': vehicleType,
+        'serial': serial,
+        'timestamp': timestamp,
+        'date': DateFormat('yyyy-MM-dd').format(timestamp), // Format date for display
+      };
+    }).toList();
+
+    // Apply the filter for "Release Parked" status
+    if (_selectedFilter == 'Release Parked') {
+      filtered = filtered.where((vehicle) => vehicle['status'] == 'released').toList();
+    }
 
     // Apply search query filter (if any)
     if (_searchQuery.isNotEmpty) {
-      filtered =
-          filtered.where((vehicle) {
-            return vehicle['id']!.toLowerCase().contains(
-              _searchQuery.toLowerCase(),
-            );
-          }).toList();
-    }
-
-    // Apply the filter for Release Parked status
-    if (_selectedFilter == 'Release Parked') {
-      filtered =
-          filtered.where((vehicle) => vehicle['status'] == 'released').toList();
+      filtered = filtered.where((vehicle) {
+        return vehicle['id']!.toLowerCase().contains(_searchQuery.toLowerCase());
+      }).toList();
     }
 
     return filtered;
   }
+
+
 
   void _onNavBarTapped(int index) {
     if (index == 1) {
@@ -177,14 +163,45 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  // Function to release vehicle
   void _releaseVehicle(String id) async {
-    // Implement release vehicle functionality
-    print("Releasing vehicle with ID: $id");
+    try {
+      // Update the vehicle's status to "released"
+      await FirebaseFirestore.instance.collection('parking_info').doc(id).update({
+        'status': 'released',  // Set the status to released
+      });
+
+      // Optionally, show a success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vehicle marked as released')),
+      );
+    } catch (e) {
+      // Handle any error that occurs during the update
+      print('Error releasing vehicle: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to release the vehicle')),
+      );
+    }
   }
 
+
+  // Function to cancel parking and remove the vehicle
   void _cancelParking(String id) async {
-    // Implement cancel parking functionality
-    print("Cancelling parking for vehicle with ID: $id");
+    try {
+      // Remove the vehicle from Firestore
+      await FirebaseFirestore.instance.collection('parking_info').doc(id).delete();
+
+      // Optionally, show a success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vehicle removed from parking')),
+      );
+    } catch (e) {
+      // Handle any error that occurs during the deletion
+      print('Error cancelling parking: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to cancel parking')),
+      );
+    }
   }
 
   @override
@@ -212,8 +229,10 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       drawer: CustomDrawer(),
       body: Padding(
+
         padding: const EdgeInsets.all(16.0),
         child: Column(
+
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -415,4 +434,5 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Text(filterName),
     );
   }
+
 }
